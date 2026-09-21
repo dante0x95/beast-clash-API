@@ -1,0 +1,16 @@
+# keep the build context small and never ship local secrets
+node_modules
+dist
+coverage
+src/generated
+.env
+.env.*
+!.env.example
+.git
+.github
+.husky
+.vscode
+docker
+Dockerfile
+docker-compose.yml
+*.log
