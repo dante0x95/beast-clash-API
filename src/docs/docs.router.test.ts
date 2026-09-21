@@ -25,9 +25,7 @@ describe("docs routes", () => {
 
   it("is not rate limited", async () => {
     const limited = createApp(
-      makeAppDeps({
-        config: { corsOrigins: [], rateLimit: { limit: 1, windowMs: 60_000 } },
-      }),
+      makeAppDeps({ config: { rateLimit: { limit: 1, windowMs: 60_000 } } }),
     );
 
     await request(limited).get("/docs/openapi.json").expect(200);

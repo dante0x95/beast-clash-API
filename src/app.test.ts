@@ -110,7 +110,7 @@ describe("request id", () => {
 describe("CORS", () => {
   const ALLOWED = "http://localhost:5173";
   const app = createApp(
-    makeAppDeps({ config: { corsOrigins: [ALLOWED], rateLimit: null } }),
+    makeAppDeps({ config: { corsOrigins: [ALLOWED] } }),
   );
 
   it("echoes an allowed origin and exposes Location and X-Request-Id", async () => {
@@ -157,7 +157,11 @@ describe("rate limit", () => {
   function appWithLimit(limit: number) {
     return createApp(
       makeAppDeps({
-        config: { corsOrigins: [], rateLimit: { limit, windowMs: 60_000 } },
+        config: {
+          corsOrigins: [],
+          rateLimit: { limit, windowMs: 60_000 },
+          trustProxy: 1,
+        },
       }),
     );
   }
@@ -192,6 +196,28 @@ describe("rate limit", () => {
     await request(app).get("/monsters").expect(200);
     await request(app).get("/monsters").expect(429);
     await request(app).get("/health").expect(200);
+  });
+
+  it("keys clients by X-Forwarded-For when a proxy is trusted", async () => {
+    const app = createApp(
+      makeAppDeps({
+        config: { rateLimit: { limit: 1, windowMs: 60_000 }, trustProxy: 1 },
+      }),
+    );
+
+    await request(app)
+      .get("/monsters")
+      .set("X-Forwarded-For", "203.0.113.1")
+      .expect(200);
+    await request(app)
+      .get("/monsters")
+      .set("X-Forwarded-For", "203.0.113.1")
+      .expect(429);
+    // a different client behind the same proxy gets its own quota
+    await request(app)
+      .get("/monsters")
+      .set("X-Forwarded-For", "203.0.113.2")
+      .expect(200);
   });
 
   it("does not limit when disabled", async () => {

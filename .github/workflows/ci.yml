@@ -62,3 +62,11 @@ jobs:
 
       - name: Build
         run: npm run build
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        run: docker build --target runtime -t beast-clash-api:ci .

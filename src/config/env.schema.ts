@@ -46,4 +46,5 @@ export const envSchema = z.object({
     .default("info"),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
 });

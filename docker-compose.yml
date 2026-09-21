@@ -17,5 +17,30 @@ services:
       timeout: 3s
       retries: 10
 
+  # production image, opt-in: docker compose --profile app up --build
+  migrate:
+    profiles: [app]
+    build: .
+    image: beast-clash-api:local
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://beast:beast@db:5432/beast_clash
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    profiles: [app]
+    build: .
+    image: beast-clash-api:local
+    environment:
+      DATABASE_URL: postgresql://beast:beast@db:5432/beast_clash
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:

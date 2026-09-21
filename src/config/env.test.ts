@@ -45,6 +45,18 @@ describe("envSchema", () => {
     expect(envSchema.safeParse({ DATABASE_URL: url }).success).toBe(false);
   });
 
+  describe("TRUST_PROXY", () => {
+    it("defaults to trusting no proxy", () => {
+      expect(envSchema.parse(validEnv).TRUST_PROXY).toBe(0);
+    });
+
+    it("rejects a negative value", () => {
+      const result = envSchema.safeParse({ ...validEnv, TRUST_PROXY: "-1" });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe("rate limit", () => {
     it("defaults to 100 requests per minute", () => {
       const result = envSchema.parse(validEnv);

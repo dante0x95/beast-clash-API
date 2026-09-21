@@ -23,6 +23,7 @@ export interface AppConfig {
   corsOrigins: readonly string[];
   /** null disables rate limiting (tests). */
   rateLimit: RateLimitConfig | null;
+  trustProxy: number;
 }
 
 export interface AppDeps {
@@ -36,6 +37,7 @@ export function createApp(deps: AppDeps): Express {
   const app = express();
 
   app.disable("x-powered-by");
+  app.set("trust proxy", deps.config.trustProxy);
   app.use(
     helmet({
       contentSecurityPolicy: { directives: { upgradeInsecureRequests: null } },

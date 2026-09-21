@@ -32,6 +32,7 @@ const app = createApp({
       limit: env.RATE_LIMIT_MAX,
       windowMs: env.RATE_LIMIT_WINDOW_MS,
     },
+    trustProxy: env.TRUST_PROXY,
   },
 });
 
