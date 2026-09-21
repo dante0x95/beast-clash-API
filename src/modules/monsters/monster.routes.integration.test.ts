@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { createApp } from "../../app.js";
 import { pingDatabase } from "../../shared/db/prisma.js";
+import { makeAppDeps } from "../../testing/app.fixture.js";
 import { testPrisma } from "../../testing/integration/database.js";
 import { createBattleService } from "../battles/battle.service.js";
 import { createPrismaBattleRepository } from "../battles/prisma-battle.repository.js";
@@ -13,14 +14,16 @@ import { createPrismaMonsterRepository } from "./prisma-monster.repository.js";
 // Real wiring end to end: HTTP -> router -> service -> repository -> Postgres
 const monsterRepository = createPrismaMonsterRepository(testPrisma);
 
-const app = createApp({
-  battleService: createBattleService({
-    battleRepository: createPrismaBattleRepository(testPrisma),
-    monsterRepository,
+const app = createApp(
+  makeAppDeps({
+    battleService: createBattleService({
+      battleRepository: createPrismaBattleRepository(testPrisma),
+      monsterRepository,
+    }),
+    checkDatabase: () => pingDatabase(testPrisma),
+    monsterService: createMonsterService(monsterRepository),
   }),
-  checkDatabase: () => pingDatabase(testPrisma),
-  monsterService: createMonsterService(monsterRepository),
-});
+);
 
 describe("monster routes (integration)", () => {
   it("supports the full create -> read -> update -> delete lifecycle", async () => {

@@ -26,6 +26,7 @@ const app = createApp({
   battleService: createBattleService({ battleRepository, monsterRepository }),
   checkDatabase: () => pingDatabase(prisma),
   monsterService: createMonsterService(monsterRepository),
+  config: { corsOrigins: env.CORS_ORIGINS },
 });
 
 const server = app.listen(env.PORT, (error) => {

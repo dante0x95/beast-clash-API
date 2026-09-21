@@ -2,7 +2,7 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../../app.js";
-import { makeBattleService } from "../battles/battle.fixture.js";
+import { makeAppDeps } from "../../testing/app.fixture.js";
 import { toMonsterDto } from "./monster.dto.js";
 import {
   makeMonster,
@@ -15,11 +15,9 @@ const dto = toMonsterDto(makeMonster());
 const VALID_ID = dto.id;
 
 function appWith(overrides: Partial<MonsterService> = {}) {
-  return createApp({
-    checkDatabase: () => Promise.resolve(),
-    monsterService: makeMonsterService(overrides),
-    battleService: makeBattleService(),
-  });
+  return createApp(
+    makeAppDeps({ monsterService: makeMonsterService(overrides) }),
+  );
 }
 
 describe("monster routes", () => {

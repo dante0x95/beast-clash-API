@@ -16,12 +16,31 @@ const databaseUrlSchema = z
     },
   );
 
+const originSchema = z
+  .url({ protocol: /^https?$/ })
+  .refine((value) => URL.canParse(value) && new URL(value).origin === value, {
+    message:
+        "must be a bare origin like https://app.example.com (no path or trailing slash)",
+  });
+
+const corsOriginsSchema = z
+  .string()
+  .default("")
+  .transform((value) =>
+    value
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0),
+  )
+  .pipe(z.array(originSchema));
+
 export const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: databaseUrlSchema,
+  CORS_ORIGINS: corsOriginsSchema,
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),

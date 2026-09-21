@@ -45,6 +45,38 @@ describe("envSchema", () => {
     expect(envSchema.safeParse({ DATABASE_URL: url }).success).toBe(false);
   });
 
+  describe("CORS_ORIGINS", () => {
+    it("defaults to an empty list", () => {
+      expect(envSchema.parse(validEnv).CORS_ORIGINS).toEqual([]);
+    });
+
+    it("splits a comma-separated list and trims each origin", () => {
+      const result = envSchema.parse({
+        ...validEnv,
+        CORS_ORIGINS: " http://localhost:5173 , https://app.example.com,",
+      });
+
+      expect(result.CORS_ORIGINS).toEqual([
+        "http://localhost:5173",
+        "https://app.example.com",
+      ]);
+    });
+
+    it.each([
+      ["a trailing slash", "https://app.example.com/"],
+      ["a path", "https://app.example.com/app"],
+      ["a non-http protocol", "ftp://app.example.com"],
+      ["a value that is not a URL", "localhost:5173"],
+    ])("rejects an origin with %s", (_case, origin) => {
+      const result = envSchema.safeParse({
+        ...validEnv,
+        CORS_ORIGINS: origin,
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
   it("rejects an unknown NODE_ENV", () => {
     const result = envSchema.safeParse({ ...validEnv, NODE_ENV: "staging" });
 

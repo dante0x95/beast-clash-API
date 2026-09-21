@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../../app.js";
 import { NotFoundError } from "../../shared/errors/app-error.js";
-import { makeMonsterService } from "../monsters/monster.fixture.js";
+import { makeAppDeps } from "../../testing/app.fixture.js";
 import { toBattleDto, toBattleSummaryDto } from "./battle.dto.js";
-import { BATTLE_ID, makeBattle, makeBattleService } from "./battle.fixture.js";
+import { makeBattleService } from "./battle.fixture.js";
+import { BATTLE_ID, makeBattle } from "./battle.fixture.js";
 import { type BattleService } from "./battle.service.js";
 
 const ID_A = "01926f3e-8c2a-7b3d-9e4f-5a6b7c8d9e0a";
@@ -16,11 +17,9 @@ const dto = toBattleDto(battle);
 const summaryDto = toBattleSummaryDto(battle);
 
 function appWith(overrides: Partial<BattleService> = {}) {
-  return createApp({
-    battleService: makeBattleService(overrides),
-    checkDatabase: () => Promise.resolve(),
-    monsterService: makeMonsterService(),
-  });
+  return createApp(
+    makeAppDeps({ battleService: makeBattleService(overrides) }),
+  );
 }
 
 describe("battle routes", () => {

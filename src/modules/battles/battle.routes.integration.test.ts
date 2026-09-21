@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { createApp } from "../../app.js";
 import { pingDatabase } from "../../shared/db/prisma.js";
+import { makeAppDeps } from "../../testing/app.fixture.js";
 import { testPrisma } from "../../testing/integration/database.js";
 import { makeMonsterInput } from "../monsters/monster.fixture.js";
 import { type CreateMonsterInput } from "../monsters/monster.schemas.js";
@@ -14,14 +15,16 @@ import { createPrismaBattleRepository } from "./prisma-battle.repository.js";
 // Real wiring end to end: HTTP -> router -> service -> engine + repositories -> Postgres
 const monsterRepository = createPrismaMonsterRepository(testPrisma);
 
-const app = createApp({
-  battleService: createBattleService({
-    battleRepository: createPrismaBattleRepository(testPrisma),
-    monsterRepository,
+const app = createApp(
+  makeAppDeps({
+    battleService: createBattleService({
+      battleRepository: createPrismaBattleRepository(testPrisma),
+      monsterRepository,
+    }),
+    checkDatabase: () => pingDatabase(testPrisma),
+    monsterService: createMonsterService(monsterRepository),
   }),
-  checkDatabase: () => pingDatabase(testPrisma),
-  monsterService: createMonsterService(monsterRepository),
-});
+);
 
 // Hawk is faster and deals 60 - 20 = 40; Tank deals 30 - 10 = 20.
 // Hawk: 100 -> 80 -> 60. Tank: 100 -> 60 -> 20 -> 0. Hawk wins on turn 5.

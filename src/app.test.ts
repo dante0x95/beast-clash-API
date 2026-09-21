@@ -1,27 +1,22 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
-import { type AppDeps, createApp } from "./app.js";
-import { makeBattleService } from "./modules/battles/battle.fixture.js";
-import { makeMonsterService } from "./modules/monsters/monster.fixture.js";
+import { createApp } from "./app.js";
+import { makeAppDeps } from "./testing/app.fixture.js";
 
-const healthyDeps: AppDeps = {
-  checkDatabase: () => Promise.resolve(),
-  monsterService: makeMonsterService(),
-  battleService: makeBattleService(),
-};
+const healthyDeps = makeAppDeps();
 
 describe("app", () => {
   const app = createApp(healthyDeps);
 
   it("returns 404 for unknown routes", async () => {
-    const res = await request(app).get("/no-existe");
+    const res = await request(app).get("/unknown");
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({
       error: {
         code: "ROUTE_NOT_FOUND",
-        message: "Route GET /no-existe not found",
+        message: "Route GET /unknown not found",
       },
     });
   });
@@ -69,5 +64,49 @@ describe("request id", () => {
       .set("x-request-id", "abc-123");
 
     expect(res.headers["x-request-id"]).toBe("abc-123");
+  });
+});
+
+describe("CORS", () => {
+  const ALLOWED = "http://localhost:5173";
+  const app = createApp(makeAppDeps({ config: { corsOrigins: [ALLOWED] } }));
+
+  it("echoes an allowed origin and exposes Location and X-Request-Id", async () => {
+    const res = await request(app).get("/health").set("Origin", ALLOWED);
+
+    expect(res.headers["access-control-allow-origin"]).toBe(ALLOWED);
+    expect(res.headers["access-control-expose-headers"]).toBe(
+      "Location,X-Request-Id",
+    );
+    expect(res.headers.vary).toMatch(/origin/i);
+  });
+
+  it("omits CORS headers for an origin that is not allowed", async () => {
+    const res = await request(app)
+      .get("/health")
+      .set("Origin", "https://evil.example.com");
+
+    expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
+  it("answers a preflight for an allowed origin", async () => {
+    const res = await request(app)
+      .options("/battles")
+      .set("Origin", ALLOWED)
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(ALLOWED);
+    expect(res.headers["access-control-allow-methods"]).toContain("POST");
+    expect(res.headers["access-control-max-age"]).toBe("600");
+  });
+
+  it("allows no origin when the list is empty", async () => {
+    const res = await request(createApp(makeAppDeps()))
+      .get("/health")
+      .set("Origin", ALLOWED);
+
+    expect(res.headers["access-control-allow-origin"]).toBeUndefined();
   });
 });
