@@ -21,6 +21,31 @@ model Monster {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  battlesAsA Battle[] @relation("BattleMonsterA")
+  battlesAsB Battle[] @relation("BattleMonsterB")
+
   @@index([deletedAt])
   @@map("monsters")
+}
+
+model Battle {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  monsterAId String   @map("monster_a_id") @db.Uuid
+  monsterBId String   @map("monster_b_id") @db.Uuid
+  // Not relations on purpose: a CHECK constraint guarantees they are monster_a_id or monster_b_id
+  winnerId   String   @map("winner_id") @db.Uuid
+  loserId    String   @map("loser_id") @db.Uuid
+  snapshotA  Json     @map("snapshot_a")
+  snapshotB  Json     @map("snapshot_b")
+  totalTurns Int      @map("total_turns")
+  turns      Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  monsterA Monster @relation("BattleMonsterA", fields: [monsterAId], references: [id], onDelete: Restrict)
+  monsterB Monster @relation("BattleMonsterB", fields: [monsterBId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([monsterAId])
+  @@index([monsterBId])
+  @@map("battles")
 }
