@@ -7,7 +7,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**"],
-      exclude: ["src/**/*.test.ts", "src/index.ts", "src/generated/**"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/index.ts",
+        "src/generated/**",
+        "src/**/*.fixture.ts",
+      ],
     },
     env: {
       NODE_ENV: "test",
