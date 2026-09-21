@@ -1,17 +1,12 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
-import { createApp } from "./app.js";
+import { type AppDeps, createApp } from "./app.js";
+
+const healthyDeps: AppDeps = { checkDatabase: () => Promise.resolve() };
 
 describe("app", () => {
-  const app = createApp();
-
-  it("GET /health responde 200", async () => {
-    const res = await request(app).get("/health");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok" });
-  });
+  const app = createApp(healthyDeps);
 
   it("responde 404 en rutas desconocidas", async () => {
     const res = await request(app).get("/no-existe");
@@ -27,8 +22,28 @@ describe("app", () => {
   });
 });
 
+describe("GET /health", () => {
+  it("responde 200 cuando la base de datos responde", async () => {
+    const res = await request(createApp(healthyDeps)).get("/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ db: "up", status: "ok" });
+  });
+
+  it("responde 503 cuando la base de datos falla", async () => {
+    const app = createApp({
+      checkDatabase: () => Promise.reject(new Error("connection refused")),
+    });
+
+    const res = await request(app).get("/health");
+
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ db: "down", status: "error" });
+  });
+});
+
 describe("request id", () => {
-  const app = createApp();
+  const app = createApp(healthyDeps);
 
   it("genera un x-request-id si no viene en la petición", async () => {
     const res = await request(app).get("/health");

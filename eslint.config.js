@@ -6,7 +6,15 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   // ── Ignorados globales ──────────────────────────────────────
-  { ignores: ["dist", "coverage", "node_modules", "*.config.js"] },
+  {
+    ignores: [
+      "dist",
+      "coverage",
+      "node_modules",
+      "*.config.js",
+      "src/generated",
+    ],
+  },
 
   // ── Base JS + TS con chequeo de tipos ───────────────────────
   js.configs.recommended,
@@ -95,7 +103,7 @@ export default tseslint.config(
 
       // Higiene general
       "no-console": ["error", { allow: ["error"] }],
-      "eqeqeq": ["error", "smart"],
+      eqeqeq: ["error", "smart"],
       "prefer-const": "error",
       "no-else-return": "error",
     },

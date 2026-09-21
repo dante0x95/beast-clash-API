@@ -5,18 +5,21 @@ import express, {
   type Response,
 } from "express";
 
+import { createHealthRouter } from "./modules/health/health.router.js";
 import { requestLogger } from "./shared/middlewares/request-logger.js";
 
-export function createApp(): Express {
+export interface AppDeps {
+  checkDatabase: () => Promise<void>;
+}
+
+export function createApp({ checkDatabase }: AppDeps): Express {
   const app = express();
 
   app.disable("x-powered-by");
   app.use(requestLogger);
   app.use(express.json());
 
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
-  });
+  app.use("/health", createHealthRouter({ checkDatabase }));
 
   app.use((_req, res) => {
     res.status(404).json({ error: "Not Found" });

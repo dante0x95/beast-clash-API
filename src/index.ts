@@ -1,10 +1,22 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
+import { createPrismaClient, pingDatabase } from "./shared/db/prisma.js";
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
-const app = createApp();
+const prisma = createPrismaClient(env.DATABASE_URL);
+
+try {
+  await pingDatabase(prisma);
+  logger.info("conexión a la base de datos verificada");
+} catch (error) {
+  logger.fatal({ err: error }, "no se pudo conectar a la base de datos");
+  await prisma.$disconnect();
+  process.exit(1);
+}
+
+const app = createApp({ checkDatabase: () => pingDatabase(prisma) });
 
 const server = app.listen(env.PORT, (error) => {
   if (error) {
@@ -27,13 +39,20 @@ function shutdown(signal: NodeJS.Signals): void {
   }, SHUTDOWN_TIMEOUT_MS);
   forceExit.unref();
 
-  server.close((error) => {
-    if (error) {
-      logger.error({ err: error }, "error al cerrar el servidor");
-      process.exit(1);
+  server.close((serverError) => {
+    if (serverError) {
+      logger.error({ err: serverError }, "error al cerrar el servidor");
     }
-    logger.info("servidor cerrado");
-    process.exit(0);
+    prisma
+      .$disconnect()
+      .then(() => {
+        logger.info("servidor y base de datos cerrados");
+        process.exit(serverError ? 1 : 0);
+      })
+      .catch((dbError: unknown) => {
+        logger.error({ err: dbError }, "error al desconectar prisma");
+        process.exit(1);
+      });
   });
 }
 
