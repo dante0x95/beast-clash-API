@@ -1,5 +1,6 @@
+import { type BattleRepository } from "./battle.repository.js";
 import { type BattleSnapshot } from "./battle.schemas.js";
-import { type NewBattle } from "./battle.types.js";
+import { type Battle, type NewBattle } from "./battle.types.js";
 
 export function makeSnapshot(
   overrides: Partial<BattleSnapshot> = {},
@@ -38,5 +39,35 @@ export function makeNewBattle(
         defenderHpAfter: 0,
       },
     ],
+  };
+}
+
+export const BATTLE_ID = "01926f3e-8c2a-7b3d-9e4f-5a6b7c8d9eba";
+
+/** A persisted battle as returned by the repository. */
+export function makeBattle(monsterAId: string, monsterBId: string): Battle {
+  return {
+    id: BATTLE_ID,
+    ...makeNewBattle(monsterAId, monsterBId),
+    createdAt: new Date("2026-01-03T00:00:00.000Z"),
+  };
+}
+
+/** Stub repository: every lookup misses unless the test overrides it; create echoes its input. */
+export function makeBattleRepository(
+  overrides: Partial<BattleRepository> = {},
+): BattleRepository {
+  return {
+    create: (battle) =>
+      Promise.resolve({
+        ...battle,
+        id: BATTLE_ID,
+        createdAt: new Date("2026-01-03T00:00:00.000Z"),
+      }),
+    findById: () => Promise.resolve(null),
+    list: ({ page, pageSize }) =>
+      Promise.resolve({ items: [], total: 0, page, pageSize }),
+    delete: () => Promise.resolve(false),
+    ...overrides,
   };
 }

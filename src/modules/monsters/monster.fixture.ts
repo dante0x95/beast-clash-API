@@ -1,5 +1,6 @@
 import { NotFoundError } from "../../shared/errors/app-error.js";
 import { toMonsterDto } from "./monster.dto.js";
+import { type MonsterRepository } from "./monster.repository.js";
 import { type CreateMonsterInput } from "./monster.schemas.js";
 import { type MonsterService } from "./monster.service.js";
 import { type Monster } from "./monster.types.js";
@@ -44,6 +45,20 @@ export function makeMonsterService(
       Promise.resolve({ items: [], total: 0, page, pageSize }),
     update: notFound,
     remove: notFound,
+    ...overrides,
+  };
+}
+
+export function makeMonsterRepository(
+  overrides: Partial<MonsterRepository> = {},
+): MonsterRepository {
+  return {
+    create: () => Promise.resolve(makeMonster()),
+    findById: () => Promise.resolve(null),
+    list: ({ page, pageSize }) =>
+      Promise.resolve({ items: [], total: 0, page, pageSize }),
+    update: () => Promise.resolve(null),
+    softDelete: () => Promise.resolve(false),
     ...overrides,
   };
 }
