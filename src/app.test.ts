@@ -2,8 +2,12 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { type AppDeps, createApp } from "./app.js";
+import { makeMonsterService } from "./modules/monsters/monster.fixture.js";
 
-const healthyDeps: AppDeps = { checkDatabase: () => Promise.resolve() };
+const healthyDeps: AppDeps = {
+  checkDatabase: () => Promise.resolve(),
+  monsterService: makeMonsterService(),
+};
 
 describe("app", () => {
   const app = createApp(healthyDeps);
@@ -12,7 +16,12 @@ describe("app", () => {
     const res = await request(app).get("/no-existe");
 
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: "Not Found" });
+    expect(res.body).toEqual({
+      error: {
+        code: "ROUTE_NOT_FOUND",
+        message: "Route GET /no-existe not found",
+      },
+    });
   });
 
   it("does not expose the x-powered-by header", async () => {
@@ -32,6 +41,7 @@ describe("GET /health", () => {
 
   it("returns 503 when the database fails", async () => {
     const app = createApp({
+      ...healthyDeps,
       checkDatabase: () => Promise.reject(new Error("connection refused")),
     });
 

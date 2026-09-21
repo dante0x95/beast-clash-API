@@ -13,3 +13,18 @@ export class NotFoundError extends AppError {
     super(`${resource} ${id} not found`);
   }
 }
+
+export interface ValidationIssue {
+  path: string;
+  message: string;
+}
+
+export class ValidationError extends AppError {
+  override readonly name = "ValidationError";
+  readonly statusCode = 400;
+  readonly code = "VALIDATION_ERROR";
+
+  constructor(readonly issues: ValidationIssue[]) {
+    super("Request validation failed");
+  }
+}

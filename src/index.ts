@@ -1,6 +1,8 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
+import { createMonsterService } from "./modules/monsters/monster.service.js";
+import { createPrismaMonsterRepository } from "./modules/monsters/prisma-monster.repository.js";
 import { createPrismaClient, pingDatabase } from "./shared/db/prisma.js";
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
@@ -16,7 +18,10 @@ try {
   process.exit(1);
 }
 
-const app = createApp({ checkDatabase: () => pingDatabase(prisma) });
+const app = createApp({
+  checkDatabase: () => pingDatabase(prisma),
+  monsterService: createMonsterService(createPrismaMonsterRepository(prisma)),
+});
 
 const server = app.listen(env.PORT, (error) => {
   if (error) {

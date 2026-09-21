@@ -1,4 +1,7 @@
+import { NotFoundError } from "../../shared/errors/app-error.js";
+import { toMonsterDto } from "./monster.dto.js";
 import { type CreateMonsterInput } from "./monster.schemas.js";
+import { type MonsterService } from "./monster.service.js";
 import { type Monster } from "./monster.types.js";
 
 /** Builds a valid monster creation payload; override only what the test cares about. */
@@ -23,6 +26,24 @@ export function makeMonster(overrides: Partial<Monster> = {}): Monster {
     ...makeMonsterInput(),
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
+/** Stub service: every lookup fails with NotFoundError unless the test overrides it. */
+export function makeMonsterService(
+  overrides: Partial<MonsterService> = {},
+): MonsterService {
+  const notFound = (id: string): Promise<never> =>
+    Promise.reject(new NotFoundError("Monster", id));
+
+  return {
+    create: () => Promise.resolve(toMonsterDto(makeMonster())),
+    getById: notFound,
+    list: ({ page, pageSize }) =>
+      Promise.resolve({ items: [], total: 0, page, pageSize }),
+    update: notFound,
+    remove: notFound,
     ...overrides,
   };
 }
