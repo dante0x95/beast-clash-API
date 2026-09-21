@@ -12,7 +12,10 @@ export function createPrismaClient(connectionString: string): PrismaClient {
     },
     {
       onPoolError: (error) => {
-        logger.error({ err: error }, "error en un cliente inactivo del pool");
+        logger.error(
+          { err: error },
+          "unexpected error on an idle pool client",
+        );
       },
     },
   );

@@ -19,6 +19,7 @@ export default defineConfig({
         "src/index.ts",
         "src/generated/**",
         "src/testing/**",
+        "src/scripts/seed.ts",
       ],
     },
     projects: [

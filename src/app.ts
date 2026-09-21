@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import helmet from "helmet";
 
+import { createDocsRouter } from "./docs/docs.router.js";
+import { buildOpenApiDocument } from "./docs/openapi.js";
 import { createBattleRouter } from "./modules/battles/battle.router.js";
 import { type BattleService } from "./modules/battles/battle.service.js";
 import { createHealthRouter } from "./modules/health/health.router.js";
@@ -34,13 +36,21 @@ export function createApp(deps: AppDeps): Express {
   const app = express();
 
   app.disable("x-powered-by");
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: { directives: { upgradeInsecureRequests: null } },
+    }),
+  );
   app.use(requestLogger);
   app.use(createCorsMiddleware(deps.config.corsOrigins));
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   // mounted before the limiter on purpose: probes from the platform must never be throttled
-  app.use("/health", createHealthRouter({ checkDatabase: deps.checkDatabase }));
+  app.use(
+    "/health",
+    createHealthRouter({ checkDatabase: deps.checkDatabase }),
+  );
+  app.use("/docs", createDocsRouter(buildOpenApiDocument()));
 
   if (deps.config.rateLimit) {
     app.use(createRateLimitMiddleware(deps.config.rateLimit));
