@@ -1,7 +1,7 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { createApp } from "./app.js";
+import { type AppDeps, createApp } from "./app.js";
 import { makeAppDeps } from "./testing/app.fixture.js";
 
 const healthyDeps = makeAppDeps();
@@ -21,6 +21,27 @@ describe("app", () => {
     });
   });
 
+  it("sets security headers", async () => {
+    const res = await request(app).get("/health");
+
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["strict-transport-security"]).toBeDefined();
+  });
+
+  it("returns 413 in the standard error format when the body is too large", async () => {
+    const res = await request(app)
+      .post("/monsters")
+      .send({ name: "x".repeat(11 * 1024) });
+
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({
+      error: {
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Request body is too large",
+      },
+    });
+  });
+
   it("does not expose the x-powered-by header", async () => {
     const res = await request(app).get("/health");
 
@@ -28,24 +49,43 @@ describe("app", () => {
   });
 });
 
-describe("GET /health", () => {
-  it("returns 200 when the database responds", async () => {
-    const res = await request(createApp(healthyDeps)).get("/health");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ db: "up", status: "ok" });
+describe("health", () => {
+  const downDeps = makeAppDeps({
+    checkDatabase: () => Promise.reject(new Error("connection refused")),
   });
 
-  it("returns 503 when the database fails", async () => {
-    const app = createApp({
-      ...healthyDeps,
-      checkDatabase: () => Promise.reject(new Error("connection refused")),
-    });
+  it.each(["/health", "/health/ready"])(
+    "%s returns 200 when the database responds",
+    async (path) => {
+      const res = await request(createApp(healthyDeps)).get(path);
 
-    const res = await request(app).get("/health");
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ db: "up", status: "ok" });
+    },
+  );
 
-    expect(res.status).toBe(503);
-    expect(res.body).toEqual({ db: "down", status: "error" });
+  it.each(["/health", "/health/ready"])(
+    "%s returns 503 when the database fails",
+    async (path) => {
+      const res = await request(createApp(downDeps)).get(path);
+
+      expect(res.status).toBe(503);
+      expect(res.body).toEqual({ db: "down", status: "error" });
+    },
+  );
+
+  it("/health/live returns 200 without checking the database", async () => {
+    const checkDatabase = vi.fn<AppDeps["checkDatabase"]>(() =>
+      Promise.reject(new Error("connection refused")),
+    );
+
+    const res = await request(createApp(makeAppDeps({ checkDatabase }))).get(
+      "/health/live",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: "ok" });
+    expect(checkDatabase).not.toHaveBeenCalled();
   });
 });
 
