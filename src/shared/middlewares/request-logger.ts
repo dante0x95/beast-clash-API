@@ -5,7 +5,7 @@ import { pinoHttp } from "pino-http";
 import { logger } from "../../lib/logger.js";
 
 const REQUEST_ID_HEADER = "x-request-id";
-
+const HEALTH_PATHS = new Set(["/health", "/health/live", "/health/ready"]);
 export const requestLogger = pinoHttp({
   logger,
   genReqId: (req, res) => {
@@ -23,6 +23,6 @@ export const requestLogger = pinoHttp({
     return "info";
   },
   autoLogging: {
-    ignore: (req) => req.url === "/health",
+    ignore: (req) => HEALTH_PATHS.has(req.url?.split("?")[0] ?? ""),
   },
 });
