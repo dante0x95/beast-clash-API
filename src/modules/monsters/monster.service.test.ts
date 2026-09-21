@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "../../shared/errors/app-error.js";
-import { makeMonster, makeMonsterInput } from "./monster.fixture.js";
+import {
+  makeMonster,
+  makeMonsterInput,
+  makeMonsterRepository,
+} from "./monster.fixture.js";
 import { type MonsterRepository } from "./monster.repository.js";
 import { createMonsterService } from "./monster.service.js";
 
@@ -19,21 +23,6 @@ const expectedDto = {
   updatedAt: "2026-01-02T00:00:00.000Z",
 };
 
-/** Stub repository: every method resolves to "not found" unless the test overrides it. */
-function makeRepository(
-  overrides: Partial<MonsterRepository> = {},
-): MonsterRepository {
-  return {
-    create: () => Promise.resolve(monster),
-    findById: () => Promise.resolve(null),
-    list: ({ page, pageSize }) =>
-      Promise.resolve({ items: [], total: 0, page, pageSize }),
-    update: () => Promise.resolve(null),
-    softDelete: () => Promise.resolve(false),
-    ...overrides,
-  };
-}
-
 describe("MonsterService", () => {
   describe("create", () => {
     it("persists the input and returns the DTO", async () => {
@@ -43,7 +32,7 @@ describe("MonsterService", () => {
       const input = makeMonsterInput();
 
       await expect(
-        createMonsterService(makeRepository({ create })).create(input),
+        createMonsterService(makeMonsterRepository({ create })).create(input),
       ).resolves.toEqual(expectedDto);
       expect(create).toHaveBeenCalledWith(input);
     });
@@ -51,7 +40,7 @@ describe("MonsterService", () => {
 
   describe("getById", () => {
     it("returns the DTO when the monster exists", async () => {
-      const repository = makeRepository({
+      const repository = makeMonsterRepository({
         findById: () => Promise.resolve(monster),
       });
 
@@ -61,7 +50,7 @@ describe("MonsterService", () => {
     });
 
     it("throws NotFoundError when the monster does not exist", async () => {
-      const service = createMonsterService(makeRepository());
+      const service = createMonsterService(makeMonsterRepository());
 
       await expect(service.getById(monster.id)).rejects.toThrow(NotFoundError);
     });
@@ -69,7 +58,7 @@ describe("MonsterService", () => {
 
   describe("list", () => {
     it("maps every item to a DTO and keeps the pagination metadata", async () => {
-      const repository = makeRepository({
+      const repository = makeMonsterRepository({
         list: () =>
           Promise.resolve({
             items: [monster],
@@ -93,7 +82,7 @@ describe("MonsterService", () => {
   describe("update", () => {
     it("returns the updated DTO when the monster exists", async () => {
       const updated = makeMonster({ hp: 999 });
-      const repository = makeRepository({
+      const repository = makeMonsterRepository({
         update: () => Promise.resolve(updated),
       });
 
@@ -106,7 +95,7 @@ describe("MonsterService", () => {
     });
 
     it("throws NotFoundError when the monster does not exist", async () => {
-      const service = createMonsterService(makeRepository());
+      const service = createMonsterService(makeMonsterRepository());
 
       await expect(service.update(monster.id, { hp: 999 })).rejects.toThrow(
         NotFoundError,
@@ -116,7 +105,7 @@ describe("MonsterService", () => {
 
   describe("remove", () => {
     it("resolves when the monster was deleted", async () => {
-      const repository = makeRepository({
+      const repository = makeMonsterRepository({
         softDelete: () => Promise.resolve(true),
       });
 
@@ -126,7 +115,7 @@ describe("MonsterService", () => {
     });
 
     it("throws NotFoundError when the monster does not exist", async () => {
-      const service = createMonsterService(makeRepository());
+      const service = createMonsterService(makeMonsterRepository());
 
       await expect(service.remove(monster.id)).rejects.toThrow(NotFoundError);
     });
@@ -136,7 +125,7 @@ describe("MonsterService", () => {
 describe("toMonsterDto (via service)", () => {
   it("never leaks fields outside the public contract", async () => {
     const withExtra = { ...monster, deletedAt: new Date(), secret: "x" };
-    const repository = makeRepository({
+    const repository = makeMonsterRepository({
       findById: () => Promise.resolve(withExtra),
     });
 
