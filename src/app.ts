@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import helmet from "helmet";
 
 import { createBattleRouter } from "./modules/battles/battle.router.js";
 import { type BattleService } from "./modules/battles/battle.service.js";
@@ -28,14 +29,15 @@ export interface AppDeps {
   config: AppConfig;
   monsterService: MonsterService;
 }
-
+const JSON_BODY_LIMIT = "10kb";
 export function createApp(deps: AppDeps): Express {
   const app = express();
 
   app.disable("x-powered-by");
+  app.use(helmet());
   app.use(requestLogger);
   app.use(createCorsMiddleware(deps.config.corsOrigins));
-  app.use(express.json());
+  app.use(express.json({ limit: JSON_BODY_LIMIT }));
 
   // mounted before the limiter on purpose: probes from the platform must never be throttled
   app.use("/health", createHealthRouter({ checkDatabase: deps.checkDatabase }));

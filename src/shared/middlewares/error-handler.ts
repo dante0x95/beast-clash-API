@@ -19,6 +19,15 @@ function isMalformedJsonError(error: unknown): boolean {
   );
 }
 
+/** express.json() rejects bodies over its limit with an http-error tagged with this type. */
+function isPayloadTooLargeError(error: unknown): boolean {
+  return (
+    error instanceof Error
+    && "type" in error
+    && error.type === "entity.too.large"
+  );
+}
+
 export function notFoundHandler(req: Request, res: Response<ErrorBody>): void {
   res.status(404).json({
     error: {
@@ -55,6 +64,18 @@ export function errorHandler(
         error: {
           code: "INVALID_JSON",
           message: "Request body is not valid JSON",
+        },
+      });
+    return;
+  }
+
+  if (isPayloadTooLargeError(error)) {
+    res
+      .status(413)
+      .json({
+        error: {
+          code: "PAYLOAD_TOO_LARGE",
+          message: "Request body is too large",
         },
       });
     return;
