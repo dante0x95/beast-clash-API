@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 
+import { createBattleRouter } from "./modules/battles/battle.router.js";
 import { createHealthRouter } from "./modules/health/health.router.js";
 import { createMonsterRouter } from "./modules/monsters/monster.router.js";
 import { type MonsterService } from "./modules/monsters/monster.service.js";
@@ -9,7 +10,10 @@ import {
 } from "./shared/middlewares/error-handler.js";
 import { requestLogger } from "./shared/middlewares/request-logger.js";
 
+import type { BattleService } from "./modules/battles/battle.service.js";
+
 export interface AppDeps {
+  battleService: BattleService;
   checkDatabase: () => Promise<void>;
   monsterService: MonsterService;
 }
@@ -23,6 +27,7 @@ export function createApp(deps: AppDeps): Express {
 
   app.use("/health", createHealthRouter({ checkDatabase: deps.checkDatabase }));
   app.use("/monsters", createMonsterRouter(deps.monsterService));
+  app.use("/battles", createBattleRouter(deps.battleService));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

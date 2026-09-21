@@ -4,16 +4,22 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../app.js";
 import { pingDatabase } from "../../shared/db/prisma.js";
 import { testPrisma } from "../../testing/integration/database.js";
+import { createBattleService } from "../battles/battle.service.js";
+import { createPrismaBattleRepository } from "../battles/prisma-battle.repository.js";
 import { makeMonsterInput } from "./monster.fixture.js";
 import { createMonsterService } from "./monster.service.js";
 import { createPrismaMonsterRepository } from "./prisma-monster.repository.js";
 
 // Real wiring end to end: HTTP -> router -> service -> repository -> Postgres
+const monsterRepository = createPrismaMonsterRepository(testPrisma);
+
 const app = createApp({
+  battleService: createBattleService({
+    battleRepository: createPrismaBattleRepository(testPrisma),
+    monsterRepository,
+  }),
   checkDatabase: () => pingDatabase(testPrisma),
-  monsterService: createMonsterService(
-    createPrismaMonsterRepository(testPrisma),
-  ),
+  monsterService: createMonsterService(monsterRepository),
 });
 
 describe("monster routes (integration)", () => {

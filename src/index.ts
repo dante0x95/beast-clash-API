@@ -1,6 +1,8 @@
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
+import { createBattleService } from "./modules/battles/battle.service.js";
+import { createPrismaBattleRepository } from "./modules/battles/prisma-battle.repository.js";
 import { createMonsterService } from "./modules/monsters/monster.service.js";
 import { createPrismaMonsterRepository } from "./modules/monsters/prisma-monster.repository.js";
 import { createPrismaClient, pingDatabase } from "./shared/db/prisma.js";
@@ -8,6 +10,8 @@ import { createPrismaClient, pingDatabase } from "./shared/db/prisma.js";
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 const prisma = createPrismaClient(env.DATABASE_URL);
+const battleRepository = createPrismaBattleRepository(prisma);
+const monsterRepository = createPrismaMonsterRepository(prisma);
 
 try {
   await pingDatabase(prisma);
@@ -19,8 +23,9 @@ try {
 }
 
 const app = createApp({
+  battleService: createBattleService({ battleRepository, monsterRepository }),
   checkDatabase: () => pingDatabase(prisma),
-  monsterService: createMonsterService(createPrismaMonsterRepository(prisma)),
+  monsterService: createMonsterService(monsterRepository),
 });
 
 const server = app.listen(env.PORT, (error) => {

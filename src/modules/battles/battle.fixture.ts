@@ -1,5 +1,8 @@
+import { NotFoundError } from "../../shared/errors/app-error.js";
+import { toBattleDto } from "./battle.dto.js";
 import { type BattleRepository } from "./battle.repository.js";
 import { type BattleSnapshot } from "./battle.schemas.js";
+import { type BattleService } from "./battle.service.js";
 import { type Battle, type NewBattle } from "./battle.types.js";
 
 export function makeSnapshot(
@@ -68,6 +71,24 @@ export function makeBattleRepository(
     list: ({ page, pageSize }) =>
       Promise.resolve({ items: [], total: 0, page, pageSize }),
     delete: () => Promise.resolve(false),
+    ...overrides,
+  };
+}
+
+/** Stub service: create echoes a battle between the requested monsters; lookups fail with NotFoundError. */
+export function makeBattleService(
+  overrides: Partial<BattleService> = {},
+): BattleService {
+  const notFound = (id: string): Promise<never> =>
+    Promise.reject(new NotFoundError("Battle", id));
+
+  return {
+    create: ({ monsterAId, monsterBId }) =>
+      Promise.resolve(toBattleDto(makeBattle(monsterAId, monsterBId))),
+    getById: notFound,
+    list: ({ page, pageSize }) =>
+      Promise.resolve({ items: [], total: 0, page, pageSize }),
+    remove: notFound,
     ...overrides,
   };
 }

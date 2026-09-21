@@ -2,11 +2,13 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { type AppDeps, createApp } from "./app.js";
+import { makeBattleService } from "./modules/battles/battle.fixture.js";
 import { makeMonsterService } from "./modules/monsters/monster.fixture.js";
 
 const healthyDeps: AppDeps = {
   checkDatabase: () => Promise.resolve(),
   monsterService: makeMonsterService(),
+  battleService: makeBattleService(),
 };
 
 describe("app", () => {

@@ -2,6 +2,7 @@ import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
 import { createApp } from "../../app.js";
+import { makeBattleService } from "../battles/battle.fixture.js";
 import { toMonsterDto } from "./monster.dto.js";
 import {
   makeMonster,
@@ -17,6 +18,7 @@ function appWith(overrides: Partial<MonsterService> = {}) {
   return createApp({
     checkDatabase: () => Promise.resolve(),
     monsterService: makeMonsterService(overrides),
+    battleService: makeBattleService(),
   });
 }
 
