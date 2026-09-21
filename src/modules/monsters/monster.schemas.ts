@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { paginationQuerySchema } from "../../shared/pagination.schema.js";
+
 /** Business limits for monster attributes. The DB only enforces the domain invariants (hp > 0, stats >= 0). */
 export const MONSTER_LIMITS = {
   name: { min: 1, max: 50 },
@@ -36,10 +38,7 @@ export const monsterIdParamSchema = z.object({
   id: z.uuid(),
 });
 
-export const listMonstersQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
-});
+export const listMonstersQuerySchema = paginationQuerySchema;
 
 export type CreateMonsterInput = z.infer<typeof createMonsterSchema>;
 export type UpdateMonsterInput = z.infer<typeof updateMonsterSchema>;
