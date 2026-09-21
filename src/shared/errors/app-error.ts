@@ -28,3 +28,13 @@ export class ValidationError extends AppError {
     super("Request validation failed");
   }
 }
+
+export class TooManyRequestsError extends AppError {
+  override readonly name = "TooManyRequestsError";
+  readonly statusCode = 429;
+  readonly code = "RATE_LIMITED";
+
+  constructor() {
+    super("Too many requests, please try again later");
+  }
+}

@@ -10,7 +10,13 @@ export function createCorsMiddleware(
   return cors({
     origin: [...allowedOrigins],
     // browsers hide non-safelisted response headers from cross-origin scripts unless exposed
-    exposedHeaders: ["Location", "X-Request-Id"],
+    exposedHeaders: [
+      "Location",
+      "X-Request-Id",
+      "Retry-After",
+      "RateLimit",
+      "RateLimit-Policy",
+    ],
     maxAge: PREFLIGHT_MAX_AGE_SECONDS,
   });
 }

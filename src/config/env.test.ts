@@ -45,6 +45,24 @@ describe("envSchema", () => {
     expect(envSchema.safeParse({ DATABASE_URL: url }).success).toBe(false);
   });
 
+  describe("rate limit", () => {
+    it("defaults to 100 requests per minute", () => {
+      const result = envSchema.parse(validEnv);
+
+      expect(result.RATE_LIMIT_MAX).toBe(100);
+      expect(result.RATE_LIMIT_WINDOW_MS).toBe(60_000);
+    });
+
+    it("rejects a non-positive limit", () => {
+      const result = envSchema.safeParse({
+        ...validEnv,
+        RATE_LIMIT_MAX: "0",
+      });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe("CORS_ORIGINS", () => {
     it("defaults to an empty list", () => {
       expect(envSchema.parse(validEnv).CORS_ORIGINS).toEqual([]);

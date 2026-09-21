@@ -10,10 +10,16 @@ import {
   errorHandler,
   notFoundHandler,
 } from "./shared/middlewares/error-handler.js";
+import {
+  createRateLimitMiddleware,
+  type RateLimitConfig,
+} from "./shared/middlewares/rate-limit.js";
 import { requestLogger } from "./shared/middlewares/request-logger.js";
 
 export interface AppConfig {
   corsOrigins: readonly string[];
+  /** null disables rate limiting (tests). */
+  rateLimit: RateLimitConfig | null;
 }
 
 export interface AppDeps {
@@ -31,7 +37,13 @@ export function createApp(deps: AppDeps): Express {
   app.use(createCorsMiddleware(deps.config.corsOrigins));
   app.use(express.json());
 
+  // mounted before the limiter on purpose: probes from the platform must never be throttled
   app.use("/health", createHealthRouter({ checkDatabase: deps.checkDatabase }));
+
+  if (deps.config.rateLimit) {
+    app.use(createRateLimitMiddleware(deps.config.rateLimit));
+  }
+
   app.use("/monsters", createMonsterRouter(deps.monsterService));
   app.use("/battles", createBattleRouter(deps.battleService));
 

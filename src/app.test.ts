@@ -69,13 +69,15 @@ describe("request id", () => {
 
 describe("CORS", () => {
   const ALLOWED = "http://localhost:5173";
-  const app = createApp(makeAppDeps({ config: { corsOrigins: [ALLOWED] } }));
+  const app = createApp(
+    makeAppDeps({ config: { corsOrigins: [ALLOWED], rateLimit: null } }),
+  );
 
   it("echoes an allowed origin and exposes Location and X-Request-Id", async () => {
     const res = await request(app).get("/health").set("Origin", ALLOWED);
 
     expect(res.headers["access-control-allow-origin"]).toBe(ALLOWED);
-    expect(res.headers["access-control-expose-headers"]).toBe(
+    expect(res.headers["access-control-expose-headers"]).toContain(
       "Location,X-Request-Id",
     );
     expect(res.headers.vary).toMatch(/origin/i);
@@ -108,5 +110,55 @@ describe("CORS", () => {
       .set("Origin", ALLOWED);
 
     expect(res.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+});
+
+describe("rate limit", () => {
+  function appWithLimit(limit: number) {
+    return createApp(
+      makeAppDeps({
+        config: { corsOrigins: [], rateLimit: { limit, windowMs: 60_000 } },
+      }),
+    );
+  }
+
+  it("returns 429 in the standard error format once the limit is exceeded", async () => {
+    const app = appWithLimit(2);
+
+    await request(app).get("/monsters").expect(200);
+    await request(app).get("/monsters").expect(200);
+    const res = await request(app).get("/monsters");
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      error: {
+        code: "RATE_LIMITED",
+        message: "Too many requests, please try again later",
+      },
+    });
+    expect(res.headers["retry-after"]).toBeDefined();
+  });
+
+  it("reports the remaining quota in the RateLimit headers", async () => {
+    const res = await request(appWithLimit(5)).get("/monsters");
+
+    expect(res.headers["ratelimit-policy"]).toBeDefined();
+    expect(res.headers.ratelimit).toMatch(/r=4/);
+  });
+
+  it("never throttles /health", async () => {
+    const app = appWithLimit(1);
+
+    await request(app).get("/monsters").expect(200);
+    await request(app).get("/monsters").expect(429);
+    await request(app).get("/health").expect(200);
+  });
+
+  it("does not limit when disabled", async () => {
+    const app = createApp(makeAppDeps());
+
+    for (let i = 0; i < 5; i++) {
+      await request(app).get("/monsters").expect(200);
+    }
   });
 });
