@@ -1,20 +1,4 @@
 -- CreateTable
-CREATE TABLE "monsters" (
-    "id" UUID NOT NULL,
-    "name" VARCHAR(50) NOT NULL,
-    "hp" INTEGER NOT NULL,
-    "attack" INTEGER NOT NULL,
-    "defense" INTEGER NOT NULL,
-    "speed" INTEGER NOT NULL,
-    "image_url" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "deleted_at" TIMESTAMP(3),
-
-    CONSTRAINT "monsters_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "battles" (
     "id" UUID NOT NULL,
     "monster_a_id" UUID NOT NULL,
@@ -31,9 +15,6 @@ CREATE TABLE "battles" (
 );
 
 -- CreateIndex
-CREATE INDEX "monsters_deleted_at_idx" ON "monsters"("deleted_at");
-
--- CreateIndex
 CREATE INDEX "battles_created_at_idx" ON "battles"("created_at");
 
 -- CreateIndex
@@ -48,6 +29,7 @@ ALTER TABLE "battles" ADD CONSTRAINT "battles_monster_a_id_fkey" FOREIGN KEY ("m
 -- AddForeignKey
 ALTER TABLE "battles" ADD CONSTRAINT "battles_monster_b_id_fkey" FOREIGN KEY ("monster_b_id") REFERENCES "monsters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- Integrity rules the ORM cannot express
 ALTER TABLE "battles"
   ADD CONSTRAINT "battles_distinct_monsters" CHECK ("monster_a_id" <> "monster_b_id"),
   ADD CONSTRAINT "battles_winner_is_participant" CHECK ("winner_id" IN ("monster_a_id", "monster_b_id")),
