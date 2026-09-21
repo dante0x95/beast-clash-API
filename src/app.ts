@@ -5,12 +5,13 @@ import express, {
   type Response,
 } from "express";
 
-import { logger } from "./lib/logger.js";
+import { requestLogger } from "./shared/middlewares/request-logger.js";
 
 export function createApp(): Express {
   const app = express();
 
   app.disable("x-powered-by");
+  app.use(requestLogger);
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
@@ -22,8 +23,8 @@ export function createApp(): Express {
   });
 
   app.use(
-    (error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-      logger.error({ err: error }, "error no controlado");
+    (error: unknown, req: Request, res: Response, _next: NextFunction) => {
+      req.log.error({ err: error }, "error no controlado");
       res.status(500).json({ error: "Internal Server Error" });
     },
   );

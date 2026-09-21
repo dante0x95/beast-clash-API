@@ -26,3 +26,21 @@ describe("app", () => {
     expect(res.headers["x-powered-by"]).toBeUndefined();
   });
 });
+
+describe("request id", () => {
+  const app = createApp();
+
+  it("genera un x-request-id si no viene en la petición", async () => {
+    const res = await request(app).get("/health");
+
+    expect(res.headers["x-request-id"]).toMatch(/^[\da-f-]{36}$/);
+  });
+
+  it("propaga el x-request-id recibido", async () => {
+    const res = await request(app)
+      .get("/health")
+      .set("x-request-id", "abc-123");
+
+    expect(res.headers["x-request-id"]).toBe("abc-123");
+  });
+});
