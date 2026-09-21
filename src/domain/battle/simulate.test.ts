@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { makeCombatant } from "./combatant.fixture.js";
+import { InvalidCombatantError } from "./errors.js";
 import { simulateBattle } from "./simulate.js";
 
 describe("simulateBattle", () => {
@@ -161,5 +162,35 @@ describe("simulateBattle", () => {
     expect(() => simulateBattle(a, b)).not.toThrow();
     expect(a.hp).toBe(10);
     expect(b.hp).toBe(10);
+  });
+
+  describe("invalid input", () => {
+    it.each([
+      ["hp is zero", { hp: 0 }],
+      ["hp is negative", { hp: -5 }],
+      ["hp is not an integer", { hp: 10.5 }],
+      ["attack is negative", { attack: -1 }],
+      ["defense is negative", { defense: -1 }],
+      ["speed is negative", { speed: -1 }],
+      ["a stat is not an integer", { speed: 2.5 }],
+      ["a stat is NaN", { attack: Number.NaN }],
+    ])("throws InvalidCombatantError when %s", (_, overrides) => {
+      const invalid = makeCombatant({ id: "invalid", ...overrides });
+      const valid = makeCombatant({ id: "valid" });
+
+      expect(() => simulateBattle(invalid, valid)).toThrow(
+        InvalidCombatantError,
+      );
+      expect(() => simulateBattle(valid, invalid)).toThrow(
+        InvalidCombatantError,
+      );
+    });
+
+    it("throws InvalidCombatantError when both combatants share the same id", () => {
+      const a = makeCombatant({ id: "same" });
+      const b = makeCombatant({ id: "same" });
+
+      expect(() => simulateBattle(a, b)).toThrow(InvalidCombatantError);
+    });
   });
 });
