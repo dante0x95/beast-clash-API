@@ -42,12 +42,12 @@
     "@stylistic/eslint-plugin": "^5.10.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.1",
     "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
-    "commit-and-tag-version": "^13.2.0",
+    "commit-and-tag-version": "^13.2.1",
     "eslint": "^10.10.0",
-    "eslint-plugin-perfectionist": "^5.11.0",
+    "eslint-plugin-perfectionist": "^5.11.1",
     "eslint-plugin-unicorn": "^74.0.0",
     "fast-check": "^4.10.2",
     "husky": "^9.1.7",
@@ -57,7 +57,7 @@
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
@@ -70,6 +70,6 @@
     "pino-http": "^11.0.0",
     "swagger-ui-express": "^5.0.1",
     "prisma": "^7.10.0",
-    "zod": "^4.6.2"
+    "zod": "^4.6.5"
   }
 }
