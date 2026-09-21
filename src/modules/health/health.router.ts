@@ -14,7 +14,7 @@ export function createHealthRouter({ checkDatabase }: HealthDeps): Router {
     } catch (error) {
       req.log.error(
         { err: error },
-        "health check: la base de datos no responde",
+        "health check: database is not responding",
       );
       res.status(503).json({ db: "down", status: "error" });
     }

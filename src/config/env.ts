@@ -5,7 +5,7 @@ import { envSchema } from "./env.schema.js";
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  console.error("❌ Variables de entorno inválidas:");
+  console.error("❌ Invalid environment variables:");
   console.error(z.prettifyError(result.error));
   process.exit(1);
 }
