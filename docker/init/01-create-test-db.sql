@@ -1,0 +1,1 @@
+CREATE DATABASE beast_clash_test OWNER beast;
